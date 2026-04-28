@@ -1,0 +1,4 @@
+Model,Overall Acc,Macro F1,Best Race,Worst Race,Race Gap,Male Acc,Female Acc
+Baseline,0.3083,0.0753,0.4252,0.2635,0.1617,0.2612,0.3611
+M1: Weighted Loss,0.1013,0.0667,0.1286,0.089,0.0396,0.1024,0.1002
+M2: Balanced Sampler,0.2218,0.1068,0.2974,0.1947,0.1027,0.1915,0.2559
