@@ -1,11 +1,3 @@
-"""
-Run this script ONCE to convert main_notebook.py into a proper Jupyter Notebook (.ipynb)
-with correct cell splitting based on ## SECTION markers.
-
-Usage:
-    python convert_to_notebook.py
-"""
-
 import json
 import re
 

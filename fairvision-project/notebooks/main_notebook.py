@@ -1,17 +1,3 @@
-# =============================================================================
-# FairVision - Main Jupyter Notebook
-# CNN-Based Age Group Classification: Detecting & Mitigating Bias
-# IJSE | Certified AI & ML Engineer | 2025/2026
-# =============================================================================
-
-# --------------------------------------------------
-# CELL 1 — Install dependencies (run once in Colab)
-# --------------------------------------------------
-# !pip install torch torchvision datasets scikit-learn matplotlib seaborn pandas pillow tqdm
-
-# --------------------------------------------------
-# CELL 2 — Imports & global config
-# --------------------------------------------------
 import sys, os, random
 import numpy as np
 import pandas as pd
@@ -49,9 +35,7 @@ RACE_NAMES   = ["East Asian","Indian","Black","White","Middle Eastern","Latino_H
 BATCH_SIZE = 64; EPOCHS = 20; LR = 1e-3; WEIGHT_DECAY = 1e-4; VAL_RATIO = 0.20
 MEAN = [0.485, 0.456, 0.406]; STD = [0.229, 0.224, 0.225]
 
-# --------------------------------------------------
-# CELL 3 — Load FairFace dataset
-# --------------------------------------------------
+ 
 print("Loading FairFace 0.25 config...")
 dataset  = load_dataset("HuggingFaceM4/FairFace", "0.25")
 hf_train = dataset["train"]
@@ -64,9 +48,7 @@ train_idx, val_idx = train_test_split(
 )
 print(f"Internal train: {len(train_idx):,}  |  Internal val: {len(val_idx):,}")
 
-# --------------------------------------------------
-# CELL 4 — EDA
-# --------------------------------------------------
+ 
 # Age distribution
 age_c = Counter(hf_train["age"])
 age_v = [age_c[i] for i in range(len(AGE_NAMES))]
@@ -109,9 +91,7 @@ print("Key finding: '0-2' and '70+' are heavily underrepresented — primary bia
 eda_df = pd.DataFrame({"Age Group": AGE_NAMES, "Count": age_v, "Pct (%)": [round(v/sum(age_v)*100,2) for v in age_v]})
 print(eda_df.to_string(index=False))
 
-# --------------------------------------------------
-# CELL 5 — Data Preparation
-# --------------------------------------------------
+ 
 train_transform = transforms.Compose([
     transforms.Resize((224,224)),
     transforms.RandomHorizontalFlip(p=0.5),
@@ -146,11 +126,9 @@ val_loader   = DataLoader(val_ds,   batch_size=BATCH_SIZE, shuffle=False, num_wo
 test_loader  = DataLoader(test_ds,  batch_size=BATCH_SIZE, shuffle=False, num_workers=2, pin_memory=True)
 print(f"Loaders ready — Train:{len(train_loader)} Val:{len(val_loader)} Test:{len(test_loader)} batches")
 
-# --------------------------------------------------
-# CELL 6 — CNN Architecture
-# --------------------------------------------------
+ 
 class ConvBlock(nn.Module):
-    """Conv2d → BatchNorm2d → ReLU → MaxPool2d"""
+     
     def __init__(self, in_ch, out_ch, pool=True):
         super().__init__()
         layers = [nn.Conv2d(in_ch, out_ch, 3, padding=1, bias=False), nn.BatchNorm2d(out_ch), nn.ReLU(inplace=True)]
@@ -159,17 +137,7 @@ class ConvBlock(nn.Module):
     def forward(self, x): return self.block(x)
 
 class FairVisionCNN(nn.Module):
-    """
-    Custom CNN — 5 ConvBlocks + FC Classifier.
-    
-    Design Justification:
-    - Filters [32,64,128,256,256]: progressive feature abstraction (edges→faces)
-    - BatchNorm: training stability across demographic groups
-    - MaxPool: reduces 224→7 spatially, controls computation
-    - Dropout(0.5/0.3): prevents overfitting on majority-class demographics
-    - FC: 12544→1024→512→9 two-stage compression
-    - Kaiming/Xavier init: proper for ReLU activations
-    """
+  
     def __init__(self, num_classes=9):
         super().__init__()
         self.features = nn.Sequential(
@@ -193,9 +161,7 @@ _tmp = FairVisionCNN(9); _out = _tmp(torch.randn(2,3,224,224))
 print(f"Architecture OK | Output: {_out.shape} | Params: {sum(p.numel() for p in _tmp.parameters()):,}")
 del _tmp, _out
 
-# --------------------------------------------------
-# CELL 7 — Training helpers
-# --------------------------------------------------
+ 
 def train_epoch(model, loader, optimizer, criterion, device):
     model.train(); ls=cc=tot=0
     for imgs,ages,_,_ in tqdm(loader, desc="  Train", leave=False):
@@ -260,9 +226,7 @@ def fairness_report(race_acc, gender_acc, label):
     print(f"  Gap: {max(rv)-min(rv):.4f}  (Best:{max(rv):.4f}  Worst:{min(rv):.4f})")
     print(f"  Gender: {gender_acc}")
 
-# --------------------------------------------------
-# CELL 8 — Train Baseline
-# --------------------------------------------------
+ 
 model_base = FairVisionCNN(9).to(DEVICE)
 crit_base  = nn.CrossEntropyLoss()
 opt_base   = optim.Adam(model_base.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
@@ -272,9 +236,7 @@ hist_base = run_training(model_base, train_loader, val_loader, crit_base, opt_ba
                           sched_base, EPOCHS, "../models/baseline_best.pth", "Baseline CNN")
 plot_curves(hist_base, "Baseline CNN", "../outputs/plots/baseline_training_curves.png")
 
-# --------------------------------------------------
-# CELL 9 — Evaluate Baseline
-# --------------------------------------------------
+ 
 model_base.load_state_dict(torch.load("../models/baseline_best.pth", map_location=DEVICE))
 yt_b, yp_b, gen_b, race_b = collect_preds(model_base, test_loader, DEVICE)
 
@@ -289,9 +251,7 @@ for k,v in metrics_base.items(): print(f"  {k}: {v:.4f}")
 print(classification_report(yt_b, yp_b, target_names=AGE_NAMES, zero_division=0))
 plot_cm(yt_b, yp_b, "Confusion Matrix — Baseline", "../outputs/plots/baseline_confusion_matrix.png")
 
-# --------------------------------------------------
-# CELL 10 — Fairness Audit: Baseline
-# --------------------------------------------------
+ 
 race_acc_b   = group_acc(yt_b, yp_b, race_b,  RACE_NAMES)
 gender_acc_b = group_acc(yt_b, yp_b, gen_b,   GENDER_NAMES)
 fairness_report(race_acc_b, gender_acc_b, "Baseline")
@@ -307,15 +267,8 @@ plt.figure(figsize=(5,4)); plt.bar(GENDER_NAMES, [gender_acc_b[g] for g in GENDE
 plt.title("Gender Accuracy — Baseline"); plt.ylim(0,1); plt.tight_layout()
 plt.savefig("../outputs/plots/baseline_gender_accuracy.png", dpi=150); plt.show()
 
-# --------------------------------------------------
-# CELL 11 — Mitigation 1: Class-Weighted Loss
-# --------------------------------------------------
-"""
-WHY: Age class imbalance causes the model to favour majority classes (20-29, 30-39).
-     Inverse-frequency weights penalise errors on rare classes more heavily.
-HOW: Compute weight[i] = 1/count[i], normalise to sum=9, pass to CrossEntropyLoss(weight=...).
-EXPECTED: Better recall on '0-2' and '70+', reduced worst-group performance gap.
-"""
+ 
+ 
 train_age_labels = [int(hf_train[i]["age"]) for i in train_idx]
 counts = np.bincount(train_age_labels, minlength=9).astype(float)
 w = 1.0/(counts+1e-6); w = w/w.sum()*9
@@ -345,18 +298,8 @@ gender_acc_m1 = group_acc(yt_m1, yp_m1, gen_m1,  GENDER_NAMES)
 fairness_report(race_acc_m1, gender_acc_m1, "M1: Class-Weighted Loss")
 plot_cm(yt_m1, yp_m1, "Confusion Matrix — M1", "../outputs/plots/m1_confusion_matrix.png")
 
-# --------------------------------------------------
-# CELL 12 — Mitigation 2: Balanced Mini-Batches
-# --------------------------------------------------
-"""
-WHY: Modifies DATA SAMPLING rather than the loss function — complementary to M1.
-     Each training batch is constructed to have balanced representation per age class
-     by over-sampling rare groups (with replacement).
-HOW: Assign each sample a weight = class_weight[age_label].
-     Use PyTorch WeightedRandomSampler to build balanced batches.
-     Standard CrossEntropyLoss (no weight needed since balance is in the sampler).
-EXPECTED: More stable gradients for minority classes; reduced worst-group gaps.
-"""
+ 
+ 
 sample_w = torch.tensor([w[lbl] for lbl in train_age_labels], dtype=torch.float)
 sampler  = WeightedRandomSampler(sample_w, num_samples=len(train_idx), replacement=True)
 balanced_train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, sampler=sampler, num_workers=2, pin_memory=True)
@@ -426,9 +369,7 @@ plt.figure(figsize=(6,4)); plt.bar(lbls, gaps, color=pal, edgecolor="black")
 plt.title("Race Accuracy Gap (Best − Worst)"); plt.ylabel("Gap (lower is fairer)"); plt.xticks(rotation=10)
 plt.tight_layout(); plt.savefig("../outputs/plots/comparison_race_gap.png", dpi=150); plt.show()
 
-# --------------------------------------------------
-# CELL 14 — Final Recommendation
-# --------------------------------------------------
+ 
 print("""
 ╔══════════════════════════════════════════════════════════════════════════╗
 ║              FINAL ENGINEERING RECOMMENDATION                           ║
