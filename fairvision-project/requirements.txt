@@ -1,11 +1,9 @@
---extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+torchaudio
 
-torch==2.1.0+cpu
-torchvision==0.16.0+cpu
-torchaudio==2.1.0+cpu
-
-streamlit>=1.28.0
-pillow>=9.5.0
-numpy>=1.24.0
-pandas>=2.0.0
-opencv-python-headless  
+streamlit==1.32.2
+numpy==1.26.4
+pandas==2.2.2
+pillow==10.2.0
+opencv-python-headless==4.9.0.80
