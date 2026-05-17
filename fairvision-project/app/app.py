@@ -16,8 +16,11 @@ try:
     import torch.nn as nn
     import torchvision.transforms as transforms
     TORCH_OK = True
-except ImportError:
+    TORCH_ERROR = None
+
+except Exception as e:
     TORCH_OK = False
+    TORCH_ERROR = str(e)
 
  
 APP_DIR    = os.path.dirname(os.path.abspath(__file__))
@@ -141,6 +144,10 @@ st.markdown("<br>",unsafe_allow_html=True)
 
 if error:
     st.error(f"Model Error: {error}")
+
+    if not TORCH_OK:
+        st.error(f"Torch Debug Error: {TORCH_ERROR}")
+
     st.info(f"Model path checked: {MODEL_PATH}")
     st.stop()
 
